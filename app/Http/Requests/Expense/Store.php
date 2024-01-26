@@ -2,6 +2,12 @@
 
 namespace App\Http\Requests\Expense;
 
+//Utils
+use App\Utils\{
+    PriceUtils,
+    DateUtils
+};
+
 //Rules
 use App\Rules\Expense\{
     CheckPositiveValue,
@@ -9,16 +15,10 @@ use App\Rules\Expense\{
 };
 
 //Miscellaneous
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class Store extends FormRequest
 {
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, ValidationRule|array|string>
-     */
     public function rules(): array
     {
         return [
@@ -27,5 +27,13 @@ class Store extends FormRequest
             'value'       => ['required', 'string', new CheckPositiveValue],
             'description' => ['required', 'string', 'max:191']
         ];
+    }
+
+    public function prepareForValidation(): void
+    {
+        $this->merge([
+            'value' => PriceUtils::formatValueToSave($this->input('value')),
+            'date'  => DateUtils::formatDateToSave($this->input('date'))
+        ]);
     }
 }

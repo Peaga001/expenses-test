@@ -13,11 +13,15 @@ use App\Http\Requests\Expense\{
 use App\Http\Resources\ExpenseResource;
 
 //Models
-use App\Models\Expense;
+use App\Models\{
+    Expense,
+    User
+};
 
 //Miscellaneous
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Symfony\Component\HttpFoundation\Response;
+use App\Notifications\CreatedExpense;
 
 class ExpenseController extends Controller
 {
@@ -37,8 +41,16 @@ class ExpenseController extends Controller
 
     public function store(Store $request): object
     {
+        /**
+         * @var User $user
+         * @var Expense $expense
+         */
+
         $expense = Expense::query()->make($request->toArray());
         $expense->save();
+
+        $user = User::query()->find($request->input('user_id'));
+        $user->notify(new CreatedExpense($expense));
 
         return response(
             content: [
