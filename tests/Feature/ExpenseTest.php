@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use App\Http\Resources\ExpenseResource;
 
 //Miscellaneous
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Testing\TestResponse;
 use Illuminate\Support\Collection;
 use Laravel\Sanctum\Sanctum;
@@ -23,6 +24,8 @@ use Tests\TestCase;
 
 class ExpenseTest extends TestCase
 {
+    use DatabaseTransactions;
+
     public function test_correctly_api_resource(): void
     {
         $keys         = ['id', 'date', 'description', 'value', 'user_id'];
