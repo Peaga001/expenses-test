@@ -1,6 +1,6 @@
 <?php
 
-namespace app\Rules\Expense;
+namespace App\Rules\Expense;
 
 use Illuminate\Translation\PotentiallyTranslatedString;
 use Illuminate\Contracts\Validation\ValidationRule;
