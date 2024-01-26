@@ -21,7 +21,10 @@ Aplicação laravel desenvolvida para a geração de despesas.
 - Dentro da pasta do projeto rodar os comandos:
   - renomear o arquivo .env.example para .env
   - composer install (necessário ter o composer instalado).
-  - php artisan prepare:application (necessário ter o mysql instalado).
+  - php artisan prepare:application (necessário ter o mysql instalado e configurar a **.env**).
+    - DB_DATABASE=nomeDoSeuBancoDeDados
+    - DB_USERNAME=nomeDoSeuUsuarioMysql
+    - DB_PASSWORD=senhaDOSeuUsuarioMysql
 ****
 
 ### Utilização do Projeto
