@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 //Requests
-use Illuminate\Auth\Access\AuthorizationException;
 use App\Http\Requests\Expense\{
     Update,
     Store
@@ -17,6 +16,16 @@ use App\Models\{
     Expense,
     User
 };
+
+//Rules
+use App\Rules\Expense\{
+    CheckPositiveValue,
+    CheckValidDate
+};
+
+//Exceptions
+use Illuminate\Auth\Access\AuthorizationException;
+use Throwable;
 
 //Miscellaneous
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -110,6 +119,14 @@ class ExpenseController extends Controller
      *             ),
      *         ),
      *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Erro interno",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="message", type="string"),
+     *         ),
+     *     ),
      * )
      */
     public function store(Store $request): object
@@ -119,20 +136,39 @@ class ExpenseController extends Controller
          * @var Expense $expense
          */
 
-        $expense = Expense::query()->make($request->toArray());
-        $expense->save();
+        try {
 
-        $user = User::query()->find($request->input('user_id'));
-        $user->notify(new CreatedExpense($expense));
+            $request->validate([
+                'user_id'     => ['required', 'exists:users,id'],
+                'date'        => ['required', 'date', new CheckValidDate],
+                'value'       => ['required', 'string', new CheckPositiveValue],
+                'description' => ['required', 'string', 'max:191']
+            ]);
 
-        return response(
-            content: [
-                'message' => 'Despesa criada com sucesso!',
-                'data'    => new ExpenseResource($expense)
-            ]
-        )->setStatusCode(
-            code: Response::HTTP_CREATED
-        );
+            $expense = Expense::query()->make($request->toArray());
+            $expense->save();
+
+            $user = User::query()->find($request->input('user_id'));
+            $user->notify(new CreatedExpense($expense));
+
+            return response(
+                content: [
+                    'message' => 'Despesa criada com sucesso!',
+                    'data'    => new ExpenseResource($expense)
+                ]
+            )->setStatusCode(
+                code: Response::HTTP_CREATED
+            );
+
+        }catch (Throwable $error){
+            return response(
+                content: [
+                    'message' => $error->getMessage()
+                ]
+            )->setStatusCode(
+                code: Response::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
     }
 
     /**
@@ -277,11 +313,26 @@ class ExpenseController extends Controller
      *              @OA\Property(property="message", type="string"),
      *          ),
      *     ),
-     *     )
+     *     @OA\Response(
+     *          response=500,
+     *          description="Erro interno",
+     *          @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="message", type="string"),
+     *          ),
+     *     ),
+     *)
      */
     public function update(Update $request, string $id): object
     {
         try {
+
+            $request->validate([
+                'user_id'     => ['nullable', 'exists:users,id'],
+                'date'        => ['nullable', 'date', new CheckValidDate],
+                'value'       => ['nullable', 'string', new CheckPositiveValue],
+                'description' => ['nullable', 'string', 'max:191']
+            ]);
 
             $expense = Expense::query()->findOrFail($id);
 
@@ -313,6 +364,14 @@ class ExpenseController extends Controller
                 ]
             )->setStatusCode(
                 code: Response::HTTP_UNAUTHORIZED
+            );
+        } catch (Throwable $error){
+            return response(
+                content: [
+                    'message' => $error->getMessage()
+                ]
+            )->setStatusCode(
+                code: Response::HTTP_INTERNAL_SERVER_ERROR
             );
         }
     }
